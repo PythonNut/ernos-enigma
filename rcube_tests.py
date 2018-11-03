@@ -6,33 +6,64 @@ import time
 import socket
 import sys
 
+
 HOST = 'localhost'	# Symbolic name, meaning all available interfaces
-PORT = 9999	# Arbitrary non-privileged port
+PORT = 9998	# Arbitrary non-privileged port
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print('Socket created')
+MOST_RECENT_DATA = ""
 
-#Bind socket to local host and port
-try:
-	s.bind((HOST, PORT))
-except socket.error as msg:
-	print('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
-	sys.exit()
 
-print('Socket bind complete')
+def handle_socky(conn):
+    try:
+        counter = 0
+        data_array = np.full(4, "         ")
+        global MOST_RECENT_DATA
+        while True:
+            data = conn.recv(9)
+            some = data.decode("utf-8")
+            data_array[counter] = some
+            print(data_array[0])
+            if np.all(data_array == data_array[0]):
 
-#Start listening on socket
-s.listen(10)
-print('Socket now listening')
+                if MOST_RECENT_DATA != data_array[0]:
+                    print("good " + data_array[0])
+                    MOST_RECENT_DATA = data_array[0]
+            conn.sendall(data)
+            counter += 1
+            if counter == 4: counter = 0
+    finally:
+        conn.close()
 
-#now keep talking with the client
-try:
-    while 1:
+def init_everything():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print('Socket created')
+
+    #Bind socket to local host and port
+    try:
+    	s.bind((HOST, PORT))
+    except socket.error as msg:
+    	print('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
+    	sys.exit()
+
+    print('Socket bind complete')
+
+    #Start listening on socket
+    s.listen(10)
+    print('Socket now listening')
+
+    threading.Thread(target = master_looper).start()
+
+    #now keep talking with the client
+    try:
+
         #wait to accept a connection - blocking call
         conn, addr = s.accept()
         print('Connected with ' + addr[0] + ':' + str(addr[1]))
-finally:
-    s.close()
+        threading.Thread(target = handle_socky, args=(conn,)).start()
+
+    finally:
+        s.close()
+
 
 class Cube:
     """
@@ -382,31 +413,36 @@ def master_looper():
     cube = Cube()
     cube_is_valid = False
     learning_cube = False
-    data = [0]*9
+    data = ""
     i = 0
 
-    stuff = [[1]*9,[2]*9,[3]*9,[4]*9,[5]*9,[6]*9]
 
     moves_to_make = "ZXZXZ"
+    print("starting loop")
 
     while True:
+        print(MOST_RECENT_DATA)
 
-       # while data == most_recent_data:
-       #     time.sleep(.1)
-       # data = most_recent_data
-       # if i == 6:
-           # break
-        data = [int(x) for x in input().split()]
+
+        while data == MOST_RECENT_DATA:
+            time.sleep(.1)
+        data = MOST_RECENT_DATA
+        print("data")
+        if len(data) != 9 or data == "         ": continue
+
+        #data = [int(x) for x in input().split()]
+        print("data" + MOST_RECENT_DATA)
 
         if not cube_is_valid and not learning_cube:
-            cube.clear()
-            moves_to_make = "ZXZXZ"
             learning_cube = True
 
         if learning_cube:
             cube.set_top_face_list(data)
         elif not cube.check_top_face_list(data):
             cube_is_valid = False
+            cube.clear()
+            moves_to_make = "ZXZXZ"
+            cube.set_top_face_list(data)
 
         if len(moves_to_make) == 0:
             if cube.check_solved():
@@ -414,13 +450,19 @@ def master_looper():
             #handle solved
             if not cube_is_valid:
                 try:
+                    print("generating solution")
                     sol = cube.generate_solution()
                 except:
                     cube_is_valid = False
+                    cube.clear()
+                    moves_to_make = "ZXZXZ"
+                    cube.set_top_face_list(data)
                 else:
                     moves_to_make = convert_moves_to_nice_moves(translate_koc_string(sol))
+                    print("We cot here!")
                     cube_is_valid = True
                     learning_cube = False
+                finally:
                     cube.execute_move(moves_to_make[0])
                     print(moves_to_make[0])
                     moves_to_make = moves_to_make[1:]
@@ -429,4 +471,4 @@ def master_looper():
             print(moves_to_make[0])
             moves_to_make = moves_to_make[1:]
 
-#threading.Thread(target = master_looper).start()
+init_everything()

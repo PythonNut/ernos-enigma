@@ -11,7 +11,7 @@ from pathlib import Path
 
 CONNECT_TO_SERVER = False
 
-cam = cv2.VideoCapture(2)
+cam = cv2.VideoCapture(0)
 
 def iterative_refine(img, iterations=1):
     kernel = np.ones((3,3),np.uint8)
@@ -66,7 +66,7 @@ DISPLAY_COLOR_MAP = {
     "O": (0,165,255)
 }
 
-if Path('calibration.dat').exists():
+if Path('calibration.dat.dat').exists():
     with shelve.open('calibration.dat') as s:
         COLOR_MAP = s['COLOR_MAP']
         CALIBRATION_INDEX = 6
@@ -107,7 +107,7 @@ def send_data(socket, data):
 
 try:
     if CONNECT_TO_SERVER:
-        server = set_up_client_socket('localhost', 9999)
+        server = set_up_client_socket('localhost', 9998)
     while True:
         # print(COLOR_MAP)
         if CALIBRATION_INDEX < len(CALIBRATION_ORDER) and not CALIBRATION_READY:
