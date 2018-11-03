@@ -9,6 +9,8 @@ scikit-image = "*"
 pylsd = "*"
 ipython = "*"
 scipy = "*"
+kociemba = "*"
+pygame = "*"
 
 [dev-packages]
 
