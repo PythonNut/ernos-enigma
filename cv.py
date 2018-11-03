@@ -9,6 +9,8 @@ import shelve
 import socket
 from pathlib import Path
 
+CONNECT_TO_SERVER = False
+
 cam = cv2.VideoCapture(2)
 
 def iterative_refine(img, iterations=1):
@@ -104,7 +106,8 @@ def send_data(socket, data):
     socket.sendall(bytes(data, 'utf-8'))
 
 try:
-    server = set_up_client_socket('localhost', 9999)
+    if CONNECT_TO_SERVER:
+        server = set_up_client_socket('localhost', 9999)
     while True:
         # print(COLOR_MAP)
         if CALIBRATION_INDEX < len(CALIBRATION_ORDER) and not CALIBRATION_READY:
@@ -279,7 +282,8 @@ try:
                     # print(hsv_color)
                     print(color_name, end="")
                 print()
-                server.sendall(bytes(msg, 'utf-8'))
+                if CONNECT_TO_SERVER:
+                    server.sendall(bytes(msg, 'utf-8'))
 
                 # Wow, we did it
                 if CALIBRATION_READY and time.process_time() - CALIBRATION_START_TIME > 1:
@@ -316,4 +320,5 @@ try:
     cv2.destroyAllWindows()
 
 finally:
-    server.close()
+    if CONNECT_TO_SERVER:
+        server.close()
