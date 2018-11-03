@@ -48,7 +48,7 @@ def hue_delta(h1, h2):
 def hsv_metric(c1, c2):
     h1, s1, v1 = c1.astype('float')
     h2, s2, v2 = c2.astype('float')
-    return hue_delta(h1, h2)**2 + (abs(s1 - s2)/4)**2 + (abs(v1 - v2)/2)**2
+    return (hue_delta(h1, h2))**2 + (abs(s1 - s2)/2)**2 + (abs(v1 - v2)/8)**2
 
 CALIBRATION_ORDER = "RWBYGO"
 CALIBRATION_INDEX = 0
@@ -63,7 +63,7 @@ DISPLAY_COLOR_MAP = {
     "B": (255,0,0),
     "Y": (0,255,255),
     "G": (0,255,0),
-    "O": (0,80,255)
+    "O": (0,165,255)
 }
 
 if Path('calibration.dat').exists():
