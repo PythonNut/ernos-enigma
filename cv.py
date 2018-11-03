@@ -3,6 +3,7 @@ import numpy as np
 import scipy.spatial
 from skimage import img_as_ubyte
 import collections
+import copy
 
 # from pylsd.lsd import lsd
 
@@ -18,6 +19,8 @@ def iterative_refine(img, iterations=1):
 def as_u8(mat):
     return mat.astype('uint8')
 
+def query_ball_midpoint(kd, c1, c2):
+    return kd.query_ball_point((c1 + c2)/2, 10)
 
 
 while True:
@@ -78,15 +81,14 @@ while True:
         print("No interesting centroids!")
         continue
     kd = scipy.spatial.cKDTree(np.vstack(interesting_centroids))
-
     for i, c1 in enumerate(interesting_centroids):
         for j, c2 in enumerate(interesting_centroids):
             if j >= i: continue
-            if kd.query_ball_point((c1 + c2)/2, 10):
+            if len(query_ball_midpoint(kd, c1, c2)) == 1:
                 corner_count[i] += 1
                 corner_count[j] += 1
 
-    print(corner_count)
+    # print(corner_count)
 
     corners = []
     for i, centroid in enumerate(interesting_centroids):
@@ -106,7 +108,7 @@ while True:
                 max_corner_dist = dist
             if dist < min_corner_dist:
                 min_corner_dist = dist
-    print(max_corner_dist, min_corner_dist)
+    # print(max_corner_dist, min_corner_dist)
 
     if max_corner_dist/min_corner_dist > 2:
         print("Corner distances don't make sense!")
@@ -119,7 +121,25 @@ while True:
         #     color = (255, 0, 0)
         cv2.circle(s3, (int(centroid[0]), int(centroid[1])), 10, color, 4)
 
+    nine_point_indices = set()
+    nine_points = copy.deepcopy(corners)
+    center = None
+    for i, c1 in enumerate(corners):
+        for j, c2 in enumerate(corners):
+            if j >= i: continue
+            midpoints = query_ball_midpoint(kd, c1, c2)
+            if len(midpoints) != 1: continue
+            midpoint_idx = midpoints[0]
+            midpoint = interesting_centroids[midpoint_idx]
+            if midpoint_idx not in nine_point_indices:
+                nine_points.append(midpoint)
+                nine_point_indices.add(midpoint_idx)
+            else:
+                center = midpoint
 
+    if len(nine_points) != 9:
+        print(f"9 point set has {len(nine_points)} points!")
+    print(nine_points)
 
 
 
