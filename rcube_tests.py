@@ -5,15 +5,57 @@ import threading
 import time
 import socket
 import sys
-
+import pygame
+import math
 
 HOST = 'localhost'	# Symbolic name, meaning all available interfaces
 PORT = 9998	# Arbitrary non-privileged port
 
 MOST_RECENT_DATA = ""
 
+pygame.init()
+
+W, H = 1600, 900
+screen = pygame.display.set_mode((W, H))
+myfont = pygame.font.SysFont('Arial', 30)
+textsurface = myfont.render('Top face', False, (255, 255, 255))
+textsurface2 = myfont.render('Full cube', False, (255, 255, 255))
+
+turn_r_clock_msg = myfont.render('Turn the right side of the cube towards yourself.', False, (255, 255, 255))
+turn_r_cclock_msg = myfont.render('Turn the right side of the cube away from yourself.', False, (255, 255, 255))
+
+turn_l_clock_msg = myfont.render('Turn the left side of the cube away from yourself.', False, (255, 255, 255))
+turn_l_cclock_msg = myfont.render('Turn the left side of the cube towards yourself.', False, (255, 255, 255))
+
+turn_u_clock_msg = myfont.render('Turn the top face of the cube clockwise.', False, (255, 255, 255))
+turn_u_cclock_msg = myfont.render('Turn the top face of the cube counterclockwise.', False, (255, 255, 255))
+
+turn_x_clock_msg = myfont.render('Turn the entire cube away from yourself.', False, (255, 255, 255))
+turn_x_cclock_msg = myfont.render('Turn the entire cube towards yourself.', False, (255, 255, 255))
+
+turn_y_clock_msg = myfont.render('Turn the entire cube to your right.', False, (255, 255, 255))
+turn_y_cclock_msg = myfont.render('Turn the entire cube to your left.', False, (255, 255, 255))
+
+top_msg = myfont.render('Top', False, (255, 255, 255))
+bottom_msg = myfont.render('Bottom', False, (255, 255, 255))
+left_msg = myfont.render('Left', False, (255, 255, 255))
+right_msg = myfont.render('Right', False, (255, 255, 255))
+back_msg = myfont.render('Back', False, (255, 255, 255))
+front_msg = myfont.render('Front', False, (255, 255, 255))
+
+DISPLAY_COLOR_MAP = {
+    "X": (0,0,0),
+    " ": (255,0,255),
+    "R": (255,0,0),
+    "W": (255,255,255),
+    "B": (0,0,255),
+    "Y": (255,255,0),
+    "G": (0,255,0),
+    "O": (255,165,0)
+}
 
 def handle_socky(conn):
+    #print("handling socky")
     try:
         counter = 0
         data_array = np.full(4, "         ")
@@ -22,11 +64,11 @@ def handle_socky(conn):
             data = conn.recv(9)
             some = data.decode("utf-8")
             data_array[counter] = some
-            print(data_array[0])
+            #print(data_array[0])
             if np.all(data_array == data_array[0]):
 
                 if MOST_RECENT_DATA != data_array[0]:
-                    print("good " + data_array[0])
+                    #print("good " + data_array[0])
                     MOST_RECENT_DATA = data_array[0]
             conn.sendall(data)
             counter += 1
@@ -55,7 +97,7 @@ def init_everything():
 
     #now keep talking with the client
     try:
-
+        #print("we are trying")
         #wait to accept a connection - blocking call
         conn, addr = s.accept()
         print('Connected with ' + addr[0] + ':' + str(addr[1]))
@@ -407,31 +449,177 @@ def convert_moves_to_nice_moves(string):
             string = string[1:]
     return out
 
-most_recent_data = ""
+def draw_centered_square(screen, center, color, size):
+    x, y = center
+    h = size/2
+    pygame.draw.rect(screen, color, pygame.Rect(x-h, y-h, size,size))
+
+def draw_cube_face(screen, face, center, square_size=30, square_sep=38):
+    draw_centered_square(screen, center, DISPLAY_COLOR_MAP[face[1,1]], square_size)
+    draw_centered_square(screen, center - [square_sep, 0], DISPLAY_COLOR_MAP[face[1,0]], square_size)
+    draw_centered_square(screen, center + [square_sep, 0], DISPLAY_COLOR_MAP[face[1,2]], square_size)
+    draw_centered_square(screen, center - [0, square_sep], DISPLAY_COLOR_MAP[face[0,1]], square_size)
+    draw_centered_square(screen, center + [0, square_sep], DISPLAY_COLOR_MAP[face[2,1]], square_size)
+
+    draw_centered_square(screen, center + [square_sep, square_sep], DISPLAY_COLOR_MAP[face[2,2]], square_size)
+    draw_centered_square(screen, center + [square_sep, -square_sep], DISPLAY_COLOR_MAP[face[0,2]], square_size)
+    draw_centered_square(screen, center + [-square_sep, -square_sep], DISPLAY_COLOR_MAP[face[0,0]], square_size)
+    draw_centered_square(screen, center + [-square_sep, square_sep], DISPLAY_COLOR_MAP[face[2,0]], square_size)
+
+def draw_cube_net(screen, cube, center, square_size=30, square_sep=38, face_sep=140):
+    draw_cube_face(screen, cube.front, center, square_size, square_sep)
+    draw_cube_face(screen, cube.up, center-[0,face_sep], square_size, square_sep)
+    draw_cube_face(screen, cube.left, center-[face_sep,0], square_size, square_sep)
+    draw_cube_face(screen, cube.back, center-[2*face_sep,0], square_size, square_sep)
+    draw_cube_face(screen, cube.down, center+[0,face_sep], square_size, square_sep)
+    draw_cube_face(screen, cube.right, center+[face_sep,0], square_size, square_sep)
+
+def draw_arrow(screen, color, start, end):
+    pygame.draw.line(screen,color,start,end,6)
+    rotation = math.degrees(math.atan2(start[1]-end[1], end[0]-start[0]))+90
+    pygame.draw.polygon(screen, color, ((end[0]+20*math.sin(math.radians(rotation)), end[1]+20*math.cos(math.radians(rotation))), (end[0]+20*math.sin(math.radians(rotation-120)), end[1]+20*math.cos(math.radians(rotation-120))), (end[0]+20*math.sin(math.radians(rotation+120)), end[1]+20*math.cos(math.radians(rotation+120)))))
+
+def turn_r_cclock(screen, center, square_size=30*4, square_sep=38*4, msg=True):
+    r = square_sep + square_size/2
+    draw_arrow(screen, (255,255,255), center + [r + 50, -r], center + [r + 50, r])
+    if msg:
+        screen.blit(turn_r_cclock_msg, tuple([50, H-100]))
+
+def turn_r_clock(screen, center, square_size=30*4, square_sep=38*4, msg=True):
+    r = square_sep + square_size/2
+    draw_arrow(screen, (255,255,255), center + [r + 50, r], center + [r + 50, -r])
+    if msg:
+        screen.blit(turn_r_cclock_msg, tuple([50, H-100]))
+
+def turn_l_cclock(screen, center, square_size=30*4, square_sep=38*4, msg=True):
+    r = square_sep + square_size/2
+    draw_arrow(screen, (255,255,255), center + [-r - 50, r], center + [-r - 50, -r])
+    if msg:
+        screen.blit(turn_l_cclock_msg, tuple([50, H-100]))
+
+
+def turn_l_clock(screen, center, square_size=30*4, square_sep=38*4, msg=True):
+    r = square_sep + square_size/2
+    draw_arrow(screen, (255,255,255), center + [-r - 50, -r], center + [-r - 50, r])
+    if msg:
+        screen.blit(turn_l_clock_msg, tuple([50, H-100]))
+
+def turn_f_cclock(screen, center, square_size=30*4, square_sep=38*4):
+    r = square_sep + square_size/2
+    draw_arrow(screen, (255,255,255), center + [r, r + 50], center + [-r, r + 50])
+
+def turn_f_clock(screen, center, square_size=30*4, square_sep=38*4):
+    r = square_sep + square_size/2
+    draw_arrow(screen, (255,255,255), center + [-r, r + 50], center + [r, r + 50])
+
+def turn_b_cclock(screen, center, square_size=30*4, square_sep=38*4):
+    r = square_sep + square_size/2
+    draw_arrow(screen, (255,255,255), center + [-r, -r - 50], center + [r, -r - 50])
+
+def turn_b_clock(screen, center, square_size=30*4, square_sep=38*4):
+    r = square_sep + square_size/2
+    draw_arrow(screen, (255,255,255), center + [r, -r - 50], center + [-r, -r - 50])
+
+def turn_u_cclock(screen, center, square_size=30*4, square_sep=38*4):
+    turn_l_clock(screen, center, square_size=square_size, square_sep=square_sep, msg=False)
+    turn_f_clock(screen, center, square_size=square_size, square_sep=square_sep)
+    turn_r_clock(screen, center, square_size=square_size, square_sep=square_sep, msg=False)
+    turn_b_clock(screen, center, square_size=square_size, square_sep=square_sep)
+    screen.blit(turn_u_cclock_msg, tuple([50, H-100]))
+
+def turn_u_clock(screen, center, square_size=30*4, square_sep=38*4):
+    turn_l_cclock(screen, center, square_size=square_size, square_sep=square_sep, msg=False)
+    turn_f_cclock(screen, center, square_size=square_size, square_sep=square_sep)
+    turn_r_cclock(screen, center, square_size=square_size, square_sep=square_sep, msg=False)
+    turn_b_cclock(screen, center, square_size=square_size, square_sep=square_sep)
+    screen.blit(turn_u_clock_msg, tuple([50, H-100]))
+
+def turn_x_clock(screen, center, square_size=30*4, square_sep=38*4):
+    turn_l_cclock(screen, center, square_size=square_size, square_sep=square_sep, msg=False)
+    turn_r_clock(screen, center, square_size=square_size, square_sep=square_sep, msg=False)
+    screen.blit(turn_x_clock_msg, tuple([50, H-100]))
+
+def turn_x_cclock(screen, center, square_size=30*4, square_sep=38*4):
+    turn_l_clock(screen, center, square_size=square_size, square_sep=square_sep, msg=False)
+    turn_r_cclock(screen, center, square_size=square_size, square_sep=square_sep, msg=False)
+    screen.blit(turn_x_cclock_msg, tuple([50, H-100]))
+
+def turn_y_clock(screen, center, square_size=30*4, square_sep=38*4):
+    turn_f_clock(screen, center, square_size=square_size, square_sep=square_sep)
+    turn_b_cclock(screen, center, square_size=square_size, square_sep=square_sep)
+    screen.blit(turn_y_clock_msg, tuple([50, H-100]))
+
+def turn_y_cclock(screen, center, square_size=30*4, square_sep=38*4):
+    turn_f_cclock(screen, center, square_size=square_size, square_sep=square_sep)
+    turn_b_clock(screen, center, square_size=square_size, square_sep=square_sep)
+    screen.blit(turn_y_cclock_msg, tuple([50, H-100]))
+
+def draw_text(screen):
+    screen.blit(textsurface,(1140,100))
+    screen.blit(textsurface2,(340,100))
+
+    screen.blit(top_msg,(375,250))
+    screen.blit(bottom_msg,(350,720))
+    screen.blit(left_msg,(235,400))
+    screen.blit(back_msg,(85,400))
+    screen.blit(right_msg,(505,400))
 
 def master_looper():
+    instructions = {
+        "X": turn_x_clock,
+        "x": turn_x_cclock,
+        "Z": turn_y_clock,
+        "z": turn_y_cclock,
+        "U": turn_u_clock,
+        "u": turn_u_cclock,
+        "R": turn_r_clock,
+        "r": turn_r_cclock,
+        "L": turn_l_clock,
+        "l": turn_l_cclock
+    }
+
+
     cube = Cube()
     cube_is_valid = False
     learning_cube = False
     data = ""
     i = 0
 
+    done = False
+
+
+
+
+
 
     moves_to_make = "ZXZXZ"
-    print("starting loop")
+    #print("starting loop")
 
-    while True:
-        print(MOST_RECENT_DATA)
+    while not done:
+        #print(MOST_RECENT_DATA)
+        pygame.event.wait()
+        for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    done = True
 
+        draw_cube_net(screen, cube, np.array([400,500]))
+        draw_cube_face(screen, cube.up, np.array([1200,500]), square_size=30*4, square_sep=38*4)
 
-        while data == MOST_RECENT_DATA:
-            time.sleep(.1)
+        instructions[moves_to_make[0]](screen, np.array([1200,500]))
+
+        draw_text(screen)
+        pygame.display.update()
+        pygame.display.flip()
+        time.sleep(0.1)
+
+        if data == MOST_RECENT_DATA:
+            continue
         data = MOST_RECENT_DATA
-        print("data")
+        #print("data")
         if len(data) != 9 or data == "         ": continue
 
         #data = [int(x) for x in input().split()]
-        print("data" + MOST_RECENT_DATA)
+        print("data " + MOST_RECENT_DATA)
 
         if not cube_is_valid and not learning_cube:
             learning_cube = True

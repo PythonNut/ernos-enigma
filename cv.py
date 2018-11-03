@@ -9,7 +9,7 @@ import shelve
 import socket
 from pathlib import Path
 
-CONNECT_TO_SERVER = False
+CONNECT_TO_SERVER = True
 
 cam = cv2.VideoCapture(0)
 
@@ -48,7 +48,7 @@ def hue_delta(h1, h2):
 def hsv_metric(c1, c2):
     h1, s1, v1 = c1.astype('float')
     h2, s2, v2 = c2.astype('float')
-    return (hue_delta(h1, h2))**2 + (abs(s1 - s2)/2)**2 + (abs(v1 - v2)/8)**2
+    return (hue_delta(h1, h2))**2 + (abs(s1 - s2)/4)**2 + (abs(v1 - v2)/2)**2
 
 CALIBRATION_ORDER = "RWBYGO"
 CALIBRATION_INDEX = 0
