@@ -152,7 +152,7 @@ try:
             w, h = stats[label, cv2.CC_STAT_WIDTH], stats[label, cv2.CC_STAT_HEIGHT]
             max_area = w * h
             # print(cv2.arcLength(as_u8(labels == label).astype('us'), True))
-            if w > 200 or h > 200:
+            if w > 100 or h > 100:
                 continue
             if max_area > area * 2:
                 continue
