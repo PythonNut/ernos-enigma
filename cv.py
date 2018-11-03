@@ -109,7 +109,7 @@ try:
         # print(COLOR_MAP)
         if CALIBRATION_INDEX < len(CALIBRATION_ORDER) and not CALIBRATION_READY:
             side = CALIBRATION_ORDER[CALIBRATION_INDEX]
-            input(f"Please face side {side} > ")
+            input("Please face side {} > ".format(side))
             CALIBRATION_READY = True
             CALIBRATION_START_TIME = time.process_time()
 
@@ -234,7 +234,7 @@ try:
 
         s4 = np.zeros(s.shape + (3,), np.uint8)
         if len(nine_points) != 9:
-            print(f"9 point set has {len(nine_points)} points!")
+            print("9 point set has {} points!".format(len(nine_points)))
 
         if center is None:
             print("Failed to find center of face!")
@@ -264,7 +264,7 @@ try:
                 hsv_color = cvtPixel(rgb_color, cv2.COLOR_BGR2HSV)
                 color_name = guess_color(hsv_color)
                 draw_circle(s4, first_point, 16, DISPLAY_COLOR_MAP[color_name], 4)
-                print(f"{color_name}", end="")
+                print(color_name, end="")
                 msg += color_name
 
                 for i in eight_points:
@@ -277,7 +277,7 @@ try:
 
                     msg += color_name
                     # print(hsv_color)
-                    print(f"{color_name}", end="")
+                    print(color_name, end="")
                 print()
                 server.sendall(bytes(msg, 'utf-8'))
 
