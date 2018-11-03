@@ -451,6 +451,15 @@ def turn_y_cclock(screen, center, square_size=30*4, square_sep=38*4):
     turn_b_clock(screen, center, square_size=square_size, square_sep=square_sep)
     screen.blit(turn_y_cclock_msg, tuple([50, H-100]))
 
+def draw_text(screen):
+    screen.blit(textsurface,(1140,100))
+    screen.blit(textsurface2,(340,100))
+
+    screen.blit(top_msg,(375,250))
+    screen.blit(bottom_msg,(350,720))
+    screen.blit(left_msg,(235,400))
+    screen.blit(back_msg,(85,400))
+    screen.blit(right_msg,(505,400))
 while not done:
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -460,16 +469,9 @@ while not done:
         c.set_top_face_matrix(np.array([["R", "G", "B"], ["O", "Y", "W"], ["R", "G", "B"]]))
         draw_cube_net(screen, c, np.array([400,500]))
         draw_cube_face(screen, c.up, np.array([1200,500]), square_size=30*4, square_sep=38*4)
+        draw_text(screen)
 
         turn_x_clock(screen, np.array([1200,500]))
-        screen.blit(textsurface,(1140,100))
-        screen.blit(textsurface2,(340,100))
-
-        screen.blit(top_msg,(375,250))
-        screen.blit(bottom_msg,(350,720))
-        screen.blit(left_msg,(235,400))
-        screen.blit(back_msg,(85,400))
-        screen.blit(right_msg,(505,400))
 
 
         pygame.display.flip()
