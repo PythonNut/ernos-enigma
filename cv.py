@@ -104,7 +104,7 @@ def send_data(socket, data):
     socket.sendall(bytes(data, 'utf-8'))
 
 try:
-    server = set_up_client_socket('134.173.219.86', 9999)
+    server = set_up_client_socket('localhost', 9999)
     while True:
         # print(COLOR_MAP)
         if CALIBRATION_INDEX < len(CALIBRATION_ORDER) and not CALIBRATION_READY:
@@ -259,6 +259,7 @@ try:
                 first_point = interesting_centroids[center]
                 draw_circle(s3, first_point, 3, (255,0,0), 4)
 
+                msg = ""
                 rgb_color = stochastic_pixel_sampler(img, first_point[0], first_point[1])
                 hsv_color = cvtPixel(rgb_color, cv2.COLOR_BGR2HSV)
                 color_name = guess_color(hsv_color)
@@ -266,7 +267,6 @@ try:
                 print(f"{color_name}", end="")
                 msg += color_name
 
-                msg = ""
                 for i in eight_points:
                     point = interesting_centroids[i]
                     rgb_color = stochastic_pixel_sampler(img, point[0], point[1])
