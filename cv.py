@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
+import scipy.spatial
 from skimage import img_as_ubyte
+import collections
+
 # from pylsd.lsd import lsd
 
 cam = cv2.VideoCapture(2)
@@ -14,6 +17,8 @@ def iterative_refine(img, iterations=1):
 
 def as_u8(mat):
     return mat.astype('uint8')
+
+
 
 while True:
     ret_val, img = cam.read()
@@ -38,14 +43,14 @@ while True:
     # lsd.drawSegments(s,lines)
 
     s2 = np.zeros(s.shape)
-    s3 = np.zeros(s.shape)
+    s3 = np.zeros(s.shape + (3,), np.uint8)
     num_labels, labels, stats, centroids = connected
     interesting_centroids = []
     for label in range(num_labels):
         centroid = centroids[label]
         area = stats[label, cv2.CC_STAT_AREA]
         base_size = 500
-        max_multiplier = 6
+        max_multiplier = 10
         w, h = stats[label, cv2.CC_STAT_WIDTH], stats[label, cv2.CC_STAT_HEIGHT]
         max_area = w * h
         # print(cv2.arcLength(as_u8(labels == label).astype('us'), True))
@@ -64,9 +69,34 @@ while True:
         # cv2.drawContours(s2, contours, -1, (0,255,0), 3)
         # print(area)
 
-    print(interesting_centroids)
-    for centroid in interesting_centroids:
-        cv2.circle(s3, (int(centroid[0]), int(centroid[1])), 10, (255, 255, 255), 4)
+    # print(interesting_centroids)
+    corner_count = np.zeros(len(interesting_centroids))
+
+    # print(np.vstack(interesting_centroids))
+    if not interesting_centroids:
+        print("No interesting centroids!")
+        continue
+    kd = scipy.spatial.cKDTree(np.vstack(interesting_centroids))
+
+    for i, c1 in enumerate(interesting_centroids):
+        for j, c2 in enumerate(interesting_centroids):
+            if j >= i: continue
+            if kd.query_ball_point((c1 + c2)/2, 10):
+                corner_count[i] += 1
+                corner_count[j] += 1
+
+    print(corner_count)
+
+    if corner_count.count(3) != 4:
+        print("Need exactly four corners!")
+
+    for i, centroid in enumerate(interesting_centroids):
+        color = (255, 255, 255)
+        if corner_count[i] == 3:
+            color = (255, 0, 255)
+        if corner_count[i] == 1:
+            color = (255, 0, 0)
+        cv2.circle(s3, (int(centroid[0]), int(centroid[1])), 10, color, 4)
 
 
 
@@ -90,6 +120,8 @@ while True:
     # cv2.normalize(s,  s2, 0, 255, cv2.NORM_MINMAX)
     # s2 = s.convertTo(cs2.CV_8UC1)
     cv2.imshow("output", s3)
+    cv2.imshow("patches", s2)
+    cv2.imshow("output2", s*255)
     # cv2.imshow("output", (connected[1] > 0).astype('uint8')*255)
     if cv2.waitKey(1) == 27:
         break
