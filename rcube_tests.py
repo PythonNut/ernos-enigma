@@ -24,8 +24,8 @@ textsurface2 = myfont.render('Full cube', False, (255, 255, 255))
 turn_r_clock_msg = myfont.render('Turn the right side of the cube towards yourself.', False, (255, 255, 255))
 turn_r_cclock_msg = myfont.render('Turn the right side of the cube away from yourself.', False, (255, 255, 255))
 
-turn_l_clock_msg = myfont.render('Turn the left side of the cube away from yourself.', False, (255, 255, 255))
-turn_l_cclock_msg = myfont.render('Turn the left side of the cube towards yourself.', False, (255, 255, 255))
+turn_l_cclock_msg = myfont.render('Turn the left side of the cube away from yourself.', False, (255, 255, 255))
+turn_l_clock_msg = myfont.render('Turn the left side of the cube towards yourself.', False, (255, 255, 255))
 
 turn_u_clock_msg = myfont.render('Turn the top face of the cube clockwise.', False, (255, 255, 255))
 turn_u_cclock_msg = myfont.render('Turn the top face of the cube counterclockwise.', False, (255, 255, 255))
@@ -593,19 +593,21 @@ def master_looper():
 
 
     moves_to_make = "ZXZXZ"
+    current_move = "Z"
     #print("starting loop")
 
     while not done:
         #print(MOST_RECENT_DATA)
-        pygame.event.wait()
+        # pygame.event.wait()
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
 
+        screen.fill((0,0,0))
         draw_cube_net(screen, cube, np.array([400,500]))
         draw_cube_face(screen, cube.up, np.array([1200,500]), square_size=30*4, square_sep=38*4)
 
-        instructions[moves_to_make[0]](screen, np.array([1200,500]))
+        instructions[current_move](screen, np.array([1200,500]))
 
         draw_text(screen)
         pygame.display.update()
@@ -652,11 +654,13 @@ def master_looper():
                     learning_cube = False
                 finally:
                     cube.execute_move(moves_to_make[0])
+                    current_move = moves_to_make[0]
                     print(moves_to_make[0])
                     moves_to_make = moves_to_make[1:]
         else:
             cube.execute_move(moves_to_make[0])
             print(moves_to_make[0])
+            current_move = moves_to_make[0]
             moves_to_make = moves_to_make[1:]
 
 init_everything()

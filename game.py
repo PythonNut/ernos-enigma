@@ -460,18 +460,23 @@ def draw_text(screen):
     screen.blit(left_msg,(235,400))
     screen.blit(back_msg,(85,400))
     screen.blit(right_msg,(505,400))
+
+state = True
 while not done:
         for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
-
+        screen.fill((0,0,0))
         c = Cube()
         c.set_top_face_matrix(np.array([["R", "G", "B"], ["O", "Y", "W"], ["R", "G", "B"]]))
         draw_cube_net(screen, c, np.array([400,500]))
         draw_cube_face(screen, c.up, np.array([1200,500]), square_size=30*4, square_sep=38*4)
         draw_text(screen)
 
-        turn_x_clock(screen, np.array([1200,500]))
-
-
+        if state:
+            turn_x_clock(screen, np.array([1200,500]))
+        else:
+            turn_x_cclock(screen, np.array([1200,500]))
+        state = not state
+        time.sleep(1)
         pygame.display.flip()

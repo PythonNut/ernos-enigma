@@ -12,7 +12,7 @@ from pathlib import Path
 
 CONNECT_TO_SERVER = True
 
-cam = cv2.VideoCapture(0)
+cam = cv2.VideoCapture(2)
 
 def iterative_refine(img, iterations=1):
     kernel = np.ones((3,3),np.uint8)
@@ -320,8 +320,8 @@ try:
                 break
         except KeyboardInterrupt:
             break
-        except Exception:
-            traceback.print_exec()
+        except Exception as e:
+            print(e)
 
     cv2.destroyAllWindows()
 
