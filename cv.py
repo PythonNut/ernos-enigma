@@ -66,7 +66,7 @@ DISPLAY_COLOR_MAP = {
     "O": (0,165,255)
 }
 
-if Path('calibration.dat.dat').exists():
+if Path('calibration.dat.dat').exists() or Path('calibration.dat').exists():
     with shelve.open('calibration.dat') as s:
         COLOR_MAP = s['COLOR_MAP']
         CALIBRATION_INDEX = 6
