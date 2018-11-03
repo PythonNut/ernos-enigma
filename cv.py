@@ -70,7 +70,8 @@ while True:
         # print(area)
 
     # print(interesting_centroids)
-    corner_count = np.zeros(len(interesting_centroids))
+    corner_count = [0 for _ in range(len(interesting_centroids))]
+    # corner_count = np.zeros(len(interesting_centroids))
 
     # print(np.vstack(interesting_centroids))
     if not interesting_centroids:
@@ -87,16 +88,38 @@ while True:
 
     print(corner_count)
 
-    if corner_count.count(3) != 4:
+    corners = []
+    for i, centroid in enumerate(interesting_centroids):
+        if corner_count[i] == 3:
+            corners.append(centroid)
+
+    if len(corners) != 4:
         print("Need exactly four corners!")
+
+    min_corner_dist = 1e8
+    max_corner_dist = 1e-8
+    for i, c1 in enumerate(corners):
+        for j, c2 in enumerate(corners):
+            if j >= i: continue
+            dist = np.linalg.norm(c1 - c2)
+            if dist > max_corner_dist:
+                max_corner_dist = dist
+            if dist < min_corner_dist:
+                min_corner_dist = dist
+    print(max_corner_dist, min_corner_dist)
+
+    if max_corner_dist/min_corner_dist > 2:
+        print("Corner distances don't make sense!")
 
     for i, centroid in enumerate(interesting_centroids):
         color = (255, 255, 255)
         if corner_count[i] == 3:
             color = (255, 0, 255)
-        if corner_count[i] == 1:
-            color = (255, 0, 0)
+        # if corner_count[i] == 1:
+        #     color = (255, 0, 0)
         cv2.circle(s3, (int(centroid[0]), int(centroid[1])), 10, color, 4)
+
+
 
 
 
